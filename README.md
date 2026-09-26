@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/MattBunch/zsh-setup/actions/workflows/ci.yml/badge.svg)](https://github.com/MattBunch/zsh-setup/actions/workflows/ci.yml)
 
-A portable, modular, version-controlled Zsh configuration and automated installer designed for Linux workstations and WSL2 environments.
+My Zsh configuration.
 
 ---
 
