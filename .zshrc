@@ -8,12 +8,17 @@
 typeset -U path PATH
 
 # Add standard user binary directories if they exist
-path=(
-  "$HOME/.local/bin"
-  "$HOME/bin"
+for _user_bin_dir in \
+  "$HOME/.local/bin" \
+  "$HOME/bin" \
   "$HOME/.cargo/bin"
-  $path
-)
+do
+  if [[ -d "$_user_bin_dir" ]]; then
+    path=("$_user_bin_dir" $path)
+  fi
+done
+
+unset _user_bin_dir
 export PATH
 
 # ==============================================================================
@@ -86,6 +91,33 @@ do
   fi
 done
 
+unset _plugin_path
+
+# ==============================================================================
+# Machine-Local Overrides & Secrets (Ignored by Git)
+# ==============================================================================
+[[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
+
+# ==============================================================================
+# Terminal Tab / Window Titles
+# ==============================================================================
+autoload -Uz add-zsh-hook
+
+_set_terminal_title_precmd() {
+  print -Pn '\e]0;%n@%m:%~\a'
+}
+
+_set_terminal_title_preexec() {
+  local cmd="${1%% *}"
+  print -Pn "\e]0;%n@%m:%~ — ${cmd}\a"
+}
+
+add-zsh-hook precmd _set_terminal_title_precmd
+add-zsh-hook preexec _set_terminal_title_preexec
+
+# ==============================================================================
+# Syntax Highlighting (Must be loaded last)
+# ==============================================================================
 # zsh-syntax-highlighting (must be sourced after widgets/plugins)
 for _plugin_path in \
   "/usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" \
@@ -98,8 +130,3 @@ do
 done
 
 unset _plugin_path
-
-# ==============================================================================
-# Machine-Local Overrides & Secrets (Ignored by Git)
-# ==============================================================================
-[[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
