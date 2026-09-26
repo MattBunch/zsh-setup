@@ -23,6 +23,12 @@ A portable, modular, version-controlled Zsh configuration and automated installe
   - Zsh with modern interactive defaults
   - Fast file search with `fd` (automatically handled across distros)
   - Fast text search with `ripgrep` (`rg`)
+  - Dynamic terminal tab / window titles
+- **Navigation & Editing**:
+  - <kbd>Left</kbd> / <kbd>Right</kbd> -> Move cursor one character
+  - <kbd>Ctrl</kbd> + <kbd>Left</kbd> / <kbd>Right</kbd> -> Move cursor one word backward/forward
+  - <kbd>Alt</kbd> + <kbd>Left</kbd> / <kbd>Right</kbd> -> Move cursor one word backward/forward
+  - <kbd>Alt</kbd>+<kbd>B</kbd> / <kbd>Alt</kbd>+<kbd>F</kbd> -> Traditional Emacs word navigation
 - **Completion**:
   - Native Zsh completion (`compinit`)
   - Case-insensitive completion matching (`m:{a-zA-Z}={A-Za-z}`)
@@ -30,13 +36,12 @@ A portable, modular, version-controlled Zsh configuration and automated installe
 - **History**:
   - Shared, persistent history (`~/.zsh_history`, 50,000 entries)
   - Duplicate reduction and blank removal
-  - Prefix history search using Up / Down arrow keys (e.g. type `git` and press Up)
-  - Seamless Left / Right cursor movement
+  - <kbd>Up</kbd> / <kbd>Down</kbd> -> Prefix history search (e.g. type `git` and press Up)
 - **Plugins**:
   - `zsh-autosuggestions` (distro packaged)
-  - `zsh-syntax-highlighting` (distro packaged)
+  - `zsh-syntax-highlighting` (distro packaged, loaded last)
 - **Modularity & Security**:
-  - Sourced `~/.zshrc.local` for machine-specific settings and secrets (ignored by Git)
+  - Sourced `~/.zshrc.local` for machine-specific settings, custom tool paths, and secrets (ignored by Git)
 
 ---
 
@@ -84,10 +89,18 @@ You can also invoke distro-specific scripts directly:
 
 ## Machine-Local Configuration
 
-For sensitive values, work-specific variables, API keys, or machine-specific paths, create:
+For sensitive values, work-specific variables, API keys, or machine-specific tool paths (such as OpenCode or proprietary CLI binaries), create or edit:
 
 ```bash
 touch ~/.zshrc.local
+```
+
+Example `~/.zshrc.local`:
+```zsh
+# Machine-local tools
+if [[ -d "$HOME/.opencode/bin" ]]; then
+  path=("$HOME/.opencode/bin" $path)
+fi
 ```
 
 The primary `.zshrc` automatically sources `~/.zshrc.local` if it exists at startup:
