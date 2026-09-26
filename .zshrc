@@ -24,8 +24,26 @@ export PATH
 # ==============================================================================
 # Interactive Shell Options & Navigation
 # ==============================================================================
-# Use emacs keybindings by default (preserves standard cursor navigation)
+# Use Emacs keybindings by default
 bindkey -e
+
+# Normal Left / Right arrows
+bindkey '^[[D' backward-char
+bindkey '^[[C' forward-char
+bindkey '^[OD' backward-char
+bindkey '^[OC' forward-char
+
+# Ctrl + Left / Right: move one word
+bindkey '^[[1;5D' backward-word
+bindkey '^[[1;5C' forward-word
+
+# Alt + Left / Right: move one word
+bindkey '^[[1;3D' backward-word
+bindkey '^[[1;3C' forward-word
+
+# Traditional Emacs/Zsh word movement
+bindkey '^[b' backward-word
+bindkey '^[f' forward-word
 
 # ==============================================================================
 # Completion
