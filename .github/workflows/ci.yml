@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "feature/**" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -25,11 +25,11 @@ jobs:
 
       - name: Validate Bash script syntax
         run: |
-          find scripts -type f -name "*.sh" -exec bash -n {} +
+          find . -type f -name "*.sh" -not -path "*/.git/*" -exec bash -n {} +
 
       - name: Run ShellCheck
         run: |
-          find scripts -type f -name "*.sh" -exec shellcheck {} +
+          find . -type f -name "*.sh" -not -path "*/.git/*" -exec shellcheck {} +
 
       - name: Validate Zsh configuration syntax
         run: |
@@ -48,11 +48,11 @@ jobs:
         run: |
           dnf install -y git
 
-      - name: Run Fedora installer in isolated test environment
+      - name: Run universal installer in isolated test environment
         run: |
           TEST_HOME="/tmp/zsh-setup-home"
           mkdir -p "${TEST_HOME}"
-          HOME="${TEST_HOME}" ZSH_SETUP_SKIP_CHSH=1 ./scripts/fedora.sh
+          HOME="${TEST_HOME}" ZSH_SETUP_SKIP_CHSH=1 ./install.sh
 
       - name: Verify symlink resolution
         run: |
@@ -80,3 +80,57 @@ jobs:
           TEST_HOME="/tmp/zsh-setup-home"
           HOME="${TEST_HOME}" zsh -n "${TEST_HOME}/.zshrc"
           HOME="${TEST_HOME}" zsh -i -c 'exit 0'
+
+  ubuntu-test:
+    name: Ubuntu & WSL2 Integration Test
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install base container prerequisites
+        run: |
+          apt-get update
+          apt-get install -y git
+
+      - name: Run universal installer on Ubuntu in isolated test environment
+        run: |
+          TEST_HOME="/tmp/zsh-setup-home"
+          mkdir -p "${TEST_HOME}"
+          HOME="${TEST_HOME}" ZSH_SETUP_SKIP_CHSH=1 ./install.sh
+
+      - name: Verify symlink resolution
+        run: |
+          TEST_HOME="/tmp/zsh-setup-home"
+          TARGET="$(readlink -f "${TEST_HOME}/.zshrc")"
+          EXPECTED="$(readlink -f .zshrc)"
+          echo "Target symlink: ${TARGET}"
+          echo "Expected:       ${EXPECTED}"
+          if [[ "${TARGET}" != "${EXPECTED}" ]]; then
+            echo "Error: Symlink target mismatch!" >&2
+            exit 1
+          fi
+
+      - name: Verify portable fd compatibility and tools
+        run: |
+          TEST_HOME="/tmp/zsh-setup-home"
+          export PATH="${TEST_HOME}/.local/bin:${PATH}"
+          command -v zsh
+          command -v rg
+          command -v fd
+          zsh --version
+          rg --version
+          fd --version
+
+      - name: Exercise WSL2 branch detection
+        run: |
+          TEST_HOME="/tmp/zsh-setup-home"
+          HOME="${TEST_HOME}" ZSH_SETUP_SKIP_CHSH=1 ZSH_SETUP_FORCE_WSL=1 ./scripts/ubuntu.sh
+
+      - name: Verify interactive Zsh loading
+        run: |
+          TEST_HOME="/tmp/zsh-setup-home"
+          HOME="${TEST_HOME}" zsh -n "${TEST_HOME}/.zshrc"
+          HOME="${TEST_HOME}" PATH="${TEST_HOME}/.local/bin:${PATH}" zsh -i -c 'exit 0'
