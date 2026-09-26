@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Static Shell Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install ShellCheck and Zsh
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck zsh
+
+      - name: Validate Bash script syntax
+        run: |
+          find scripts -type f -name "*.sh" -exec bash -n {} +
+
+      - name: Run ShellCheck
+        run: |
+          find scripts -type f -name "*.sh" -exec shellcheck {} +
+
+      - name: Validate Zsh configuration syntax
+        run: |
+          zsh -n .zshrc
+
+  fedora-test:
+    name: Fedora Integration Test
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install git prerequisite
+        run: |
+          dnf install -y git
+
+      - name: Run Fedora installer in isolated test environment
+        run: |
+          TEST_HOME="/tmp/zsh-setup-home"
+          mkdir -p "${TEST_HOME}"
+          HOME="${TEST_HOME}" ZSH_SETUP_SKIP_CHSH=1 ./scripts/fedora.sh
+
+      - name: Verify symlink resolution
+        run: |
+          TEST_HOME="/tmp/zsh-setup-home"
+          TARGET="$(readlink -f "${TEST_HOME}/.zshrc")"
+          EXPECTED="$(readlink -f .zshrc)"
+          echo "Target symlink: ${TARGET}"
+          echo "Expected:       ${EXPECTED}"
+          if [[ "${TARGET}" != "${EXPECTED}" ]]; then
+            echo "Error: Symlink target mismatch!" >&2
+            exit 1
+          fi
+
+      - name: Verify CLI tools and versions
+        run: |
+          command -v zsh
+          command -v rg
+          command -v fd
+          zsh --version
+          rg --version
+          fd --version
+
+      - name: Verify interactive Zsh loading
+        run: |
+          TEST_HOME="/tmp/zsh-setup-home"
+          HOME="${TEST_HOME}" zsh -n "${TEST_HOME}/.zshrc"
+          HOME="${TEST_HOME}" zsh -i -c 'exit 0'

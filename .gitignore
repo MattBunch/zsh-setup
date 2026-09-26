@@ -1,0 +1,18 @@
+# Machine-specific shell configuration
+.zshrc.local
+
+# Shell history
+.zsh_history
+*.history
+
+# Backups
+*.backup
+*.bak
+.zshrc.backup-*
+
+# Editor temporary files
+*.swp
+*.swo
+
+# OS junk
+.DS_Store
